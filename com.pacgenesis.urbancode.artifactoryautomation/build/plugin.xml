@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<plugin xmlns="http://www.urbancode.com/PluginXMLSchema_v1" xmlns:server="http://www.urbancode.com/PluginServerXMLSchema_v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <header>
+    <identifier id="com.pacgenesis.urbancode.automation.artifactory" name="Artifactory Automation" version="1"/>
+    <description>
+      Automation Plugin to Deployable Artifacts to Artifactory
+	  </description>
+    <tag>Repositories/Artifactory</tag>
+  </header>
+  <step-type name="Deploy Files to Artifactory">
+    <description>Deploy files to Artifactory repository</description>
+    <properties>
+      <property name="artifactoryURI" required="true">
+        <property-ui description="URI of Artifactory e.g. http://someurl:8082/artifactory" label="Artifactory URI" type="textBox"/>
+      </property>
+      <property name="repository" required="true">
+        <property-ui description="Repository to deploy to in Artifactory." label="Repository to Deploy to" type="textBox"/>
+      </property>
+      <property name="userName" required="true">
+        <property-ui description="Username that has access to the repository we're deploying to." label="User Name to login to Artifactory" type="textBox"/>
+      </property>
+      <property name="password" required="true">
+        <property-ui description="Password for the username that we're deploying as." label="Password to login to Artifactory" type="textBox"/>
+      </property>
+      <property name="fileNames" required="true">
+        <property-ui description="New line separated list of files to deploy to Artifactory" label="File Names" type="textAreaBox"/>
+      </property>
+      <property name="dirOffset">
+        <property-ui description="The directory offset relative to the current working directory where the step should run." label="Directory Offset" type="textBox"/>
+      </property>
+    </properties>
+    <!-- This is the standard post processing script. It sets the step to Success if the exit code
+    of the process was 0. Otherwise, the step fails. In order for a step to run correctly, it must
+    have a post processing script and that post processing script must set the status property
+    based off of the exit code. -->
+    <post-processing><![CDATA[
+        if (properties.get("exitCode") != 0) {
+            properties.put(new java.lang.String("Status"), new java.lang.String("Failure"));
+        }
+        else {
+            properties.put("Status", "Success");
+        }
+     ]]></post-processing>
+    <!--The syntax of the command element is such that each argument goes on its own line.  
+    The arg attribute can be "value", "path", or "file". So this command will be:
+    ${GROOVY_HOME}/bin/groovy -cp src DeployToArtifactory.groovy ${PLUGIN_INPUT_PROPS} ${PLUGIN_OUTPUT_PROPS} -->
+    <command program="${GROOVY_HOME}/bin/groovy">
+      <arg value="-cp"/>
+      <arg path="classes:java/ArtifactoryAutomation.jar:lib/gson-2.2.4.jar:lib/commons-codec-1.6.jar"/>
+      <arg file="DeployToArtifactory.groovy"/>
+      <arg file="${PLUGIN_INPUT_PROPS}"/>
+      <arg file="${PLUGIN_OUTPUT_PROPS}"/>
+    </command>
+  </step-type>
+</plugin>
